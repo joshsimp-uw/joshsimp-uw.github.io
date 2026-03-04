@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Networking Tetris – Block Boundary Grid</title>
-  <style>
+<meta charset="utf-8"/>
+<title>Networking Tetris – Block Boundary Grid</title>
+<style>
     body {
       background: #020617;
       color: #e5e7eb;
@@ -140,70 +141,80 @@
     th { background: #020617; position: sticky; top: 0; }
     tbody tr:nth-child(odd)  { background: rgba(15,23,42,0.7); }
     tbody tr:nth-child(even) { background: rgba(15,23,42,0.4); }
-  </style>
+  
+
+
+    .palette-item .sub {
+      display: block;
+      font-size: 0.75rem;
+      opacity: 0.85;
+      margin-top: 0.15rem;
+    }
+
+    .cell.preview-ok {
+      outline: 2px solid rgba(34,197,94,0.8);
+      outline-offset: -2px;
+    }
+    .cell.preview-bad {
+      outline: 2px solid rgba(239,68,68,0.8);
+      outline-offset: -2px;
+    }
+
+    button.remove {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #374151;
+      background: #111827;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    button.remove:hover { border-color: #6b7280; }
+</style>
 </head>
 <body>
-  <div class="card">
-    <h1>Networking Tetris – Block Boundary Grid</h1>
-    <p class="info">
-      Enter a base network. The app picks a pixel size (a more specific prefix) and renders the whole
-      space as “pixels.” Each subnet piece is a group of pixels that snaps to valid CIDR boundaries
-      and can’t overlap other pieces.
-    </p>
-
-    <div class="row">
-      <div>
-        <label for="base">Base network (CIDR)</label><br />
-        <input id="base" type="text" value="10.0.0.0/20" />
-        <div class="info">Try /16, /20, /24, etc.</div>
-      </div>
-      <div>
-        <button id="applyBase">Apply</button>
-        <button id="reset" class="secondary">Clear boxes</button>
-        <span id="error" class="error"></span>
-      </div>
-    </div>
-
-    <div style="margin-top:0.75rem;">
-      <strong>Subnet palette</strong>
-      <div class="info">
-        Palette shows subnet sizes from the base prefix down to the pixel prefix.
-        Pick one, then click on the grid to place it.
-      </div>
-      <div id="palette" class="palette"></div>
-    </div>
-
-    <div class="grid-wrapper">
-      <div id="gridLabel" class="grid-label"></div>
-      <div id="grid" class="grid"></div>
-      <div class="legend">
-        <span class="legend-item">
-          <span class="legend-dot" style="background:#22c55e;"></span> 🟢 first pixel of subnet (network ID)
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot" style="background:#ef4444;"></span> 🔴 last pixel of subnet (broadcast)
-        </span>
-      </div>
-    </div>
-
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Label</th>
-            <th>CIDR</th>
-            <th>Pixels</th>
-            <th>Usable hosts</th>
-            <th>Network ID</th>
-            <th>Broadcast</th>
-          </tr>
-        </thead>
-        <tbody id="allocTable"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <script>
+<div class="card">
+<h1>Networking Tetris – Block Boundary Grid</h1>
+<p class="info">Enter your base CIDR (the big block you’re carving up). The grid represents that entire address space. Pick a block size in “Block selection”, then place it on the grid. The app will snap your placement to the correct boundary and will stop you from overlapping existing blocks.</p>
+<div class="row">
+<div>
+<label for="base">Base network (CIDR)</label><br/>
+<input id="base" type="text" value="10.0.0.0/20"/>
+<div class="info">Try /16, /20, /24, etc.</div>
+</div>
+<div>
+<button id="applyBase">Apply</button>
+<button class="secondary" id="reset">Clear boxes</button>
+<span class="error" id="error"></span>
+</div>
+</div>
+<div style="margin-top:0.75rem;">
+<strong>Block selection</strong>
+<div class="info">Choose a block size (CIDR). Then click or click‑and‑drag on the grid to place that subnet. Blocks must start on the correct boundary and cannot overlap.</div>
+<div class="palette" id="palette"></div>
+</div>
+<div class="grid-wrapper">
+<div class="grid-label" id="gridLabel"></div>
+<div class="grid" id="grid"></div>
+<div class="legend"><span class="legend-item"><span class="legend-dot" style="background:#22c55e;"></span> first pixel of subnet (network ID)</span><span class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> last pixel of subnet (broadcast)</span></div>
+</div>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>CIDR</th>
+<th>Pixels</th>
+<th>Usable hosts</th>
+<th>Network ID</th>
+<th>Broadcast</th>
+<th></th></tr>
+</thead>
+<tbody id="allocTable"></tbody>
+</table>
+</div>
+</div>
+<script>
     // ---------- IP helpers ----------
     function ipToInt(ip) {
       const parts = ip.split(".");
@@ -253,7 +264,7 @@
 
     // choose pixel prefix so total pixels <= 64, never more specific than /30
     function choosePixelPrefix(basePrefix) {
-      const maxExtraBits = 6;        // at most 2^6 = 64 pixels
+      const maxExtraBits = 7;        // at most 2^7 = 128 pixels
       const candidate = basePrefix + maxExtraBits;
       return Math.min(30, candidate);
     }
@@ -266,13 +277,44 @@
       return Math.pow(2, exp);
     }
 
+
+    // Count how many aligned blocks of a given prefix can still fit in the grid.
+    // This stays correct even when mixed-size blocks are already placed.
+    function countRemainingBlocks(subnetPrefix) {
+      if (!state.base) return 0;
+      const pixelsNeeded = pixelsFromPrefixes(state.pixelPrefix, subnetPrefix);
+      if (!pixelsNeeded) return 0;
+
+      let remaining = 0;
+      for (let start = 0; start < state.totalPixels; start += pixelsNeeded) {
+        const end = start + pixelsNeeded - 1;
+        if (end >= state.totalPixels) break;
+
+        let free = true;
+        for (let i = start; i <= end; i++) {
+          if (state.usedByPixel[i] !== null) { free = false; break; }
+        }
+        if (free) remaining++;
+      }
+      return remaining;
+    }
+
+    function totalBlocksPossible(subnetPrefix) {
+      const pixelsNeeded = pixelsFromPrefixes(state.pixelPrefix, subnetPrefix);
+      if (!pixelsNeeded) return 0;
+      return Math.floor(state.totalPixels / pixelsNeeded);
+    }
+
     // ---------- Palette ----------
-    function renderPalette() {
+    
+function renderPalette() {
       const palette = document.getElementById("palette");
       palette.innerHTML = "";
-      state.activeBox = null;
 
       if (!state.base) return;
+
+      const selectedPrefix = state.activeBox ? state.activeBox.prefix : null;
+      state.activeBox = null;
 
       // subnet prefixes range from base.prefix (largest) down to pixelPrefix (smallest)
       const minP = state.base.prefix;
@@ -286,14 +328,23 @@
         item.className = "palette-item";
         item.dataset.prefix = p;
 
+        const bits = p - state.base.prefix;
+        const total = totalBlocksPossible(p);
+        const remaining = countRemainingBlocks(p);
+
         const labelSpan = document.createElement("span");
-        labelSpan.textContent = "/" + p;
+        labelSpan.textContent = `/${p}  (+${bits} bit${bits === 1 ? "" : "s"})`;
+
+        const subSpan = document.createElement("span");
+        subSpan.className = "sub";
+        subSpan.textContent = `${remaining} remaining / ${total}`;
 
         const pill = document.createElement("span");
         pill.className = "pill";
-        pill.textContent = pixels + " px";
+        pill.textContent = `${pixels} px`;
 
         item.appendChild(labelSpan);
+        item.appendChild(subSpan);
         item.appendChild(pill);
 
         item.addEventListener("click", () => {
@@ -306,9 +357,19 @@
           item.classList.add("active");
         });
 
+        if (selectedPrefix === p) {
+          item.classList.add("active");
+          state.activeBox = {
+            prefix: p,
+            pixelsNeeded: pixels,
+            label: "/" + p
+          };
+        }
+
         palette.appendChild(item);
       }
     }
+
 
     // ---------- Grid ----------
     function initGrid() {
@@ -328,28 +389,51 @@
         cell.className = "cell";
         cell.dataset.index = i;
 
-        const span = document.createElement("span");
-        span.textContent = i;
-        cell.appendChild(span);
-
+        cell.addEventListener("mousedown", (e) => handleCellMouseDown(e, i));
+        cell.addEventListener("mouseenter", () => handleCellMouseEnter(i));
+        cell.addEventListener("mouseup", () => handleCellMouseUp(i));
         cell.addEventListener("click", () => handleCellClick(i));
         grid.appendChild(cell);
       }
 
       renderAllocTable();
+      renderPalette();
     }
 
-    function handleCellClick(pixelIndex) {
+    
+function handleCellClick(pixelIndex) {
+      // Keep regular click behavior for folks who don't drag.
+      tryPlaceAtPixel(pixelIndex);
+    }
+
+    // ---------- Click + Drag placement ----------
+    const dragState = {
+      isDragging: false,
+      lastHover: null,
+      preview: [],
+      previewOk: false
+    };
+
+    function clearPreview() {
+      const grid = document.getElementById("grid");
+      dragState.preview.forEach(i => {
+        const cell = grid.querySelector(`.cell[data-index="${i}"]`);
+        if (!cell) return;
+        cell.classList.remove("preview-ok", "preview-bad");
+      });
+      dragState.preview = [];
+      dragState.previewOk = false;
+    }
+
+    function computePlacement(pixelIndex) {
       const errorEl = document.getElementById("error");
       errorEl.textContent = "";
 
       if (!state.activeBox) {
-        errorEl.textContent = "Select a subnet size from the palette first.";
-        return;
+        return { ok: false, message: "Select a block size from “Block selection” first." };
       }
       if (!state.base) {
-        errorEl.textContent = "Apply a base network first.";
-        return;
+        return { ok: false, message: "Apply a base network first." };
       }
 
       const { prefix, pixelsNeeded, label } = state.activeBox;
@@ -359,22 +443,85 @@
       const end = start + pixelsNeeded - 1;
 
       if (end >= state.totalPixels) {
-        errorEl.textContent = "Subnet would exceed base block space.";
-        return;
-      }
-
-      if (start % pixelsNeeded !== 0) {
-        errorEl.textContent = "Subnet must align with its pixel boundary.";
-        return;
+        return { ok: false, message: "Subnet would exceed base block space.", start, end, prefix, pixelsNeeded, label };
       }
 
       // overlap check
       for (let i = start; i <= end; i++) {
         if (state.usedByPixel[i] !== null) {
-          errorEl.textContent = "That region already contains another subnet.";
-          return;
+          return { ok: false, message: "That region already contains another subnet.", start, end, prefix, pixelsNeeded, label };
         }
       }
+
+      return { ok: true, start, end, prefix, pixelsNeeded, label };
+    }
+
+    function previewPlacement(pixelIndex) {
+      clearPreview();
+      const grid = document.getElementById("grid");
+      const result = computePlacement(pixelIndex);
+
+      if (result.start == null || result.end == null) {
+        dragState.previewOk = false;
+        return;
+      }
+
+      dragState.preview = [];
+      for (let i = result.start; i <= result.end; i++) {
+        dragState.preview.push(i);
+        const cell = grid.querySelector(`.cell[data-index="${i}"]`);
+        if (!cell) continue;
+        cell.classList.add(result.ok ? "preview-ok" : "preview-bad");
+      }
+      dragState.previewOk = result.ok;
+      if (!result.ok && result.message) {
+        document.getElementById("error").textContent = result.message;
+      }
+    }
+
+    function handleCellMouseDown(e, pixelIndex) {
+      // Only left mouse button
+      if (e.button !== 0) return;
+      dragState.isDragging = true;
+      dragState.lastHover = pixelIndex;
+      previewPlacement(pixelIndex);
+    }
+
+    function handleCellMouseEnter(pixelIndex) {
+      if (!dragState.isDragging) return;
+      dragState.lastHover = pixelIndex;
+      previewPlacement(pixelIndex);
+    }
+
+    function handleCellMouseUp(pixelIndex) {
+      if (!dragState.isDragging) return;
+      dragState.isDragging = false;
+      dragState.lastHover = pixelIndex;
+
+      // Place on mouse up if the preview is valid
+      if (dragState.previewOk) {
+        tryPlaceAtPixel(pixelIndex);
+      }
+      clearPreview();
+    }
+
+    document.addEventListener("mouseup", () => {
+      if (!dragState.isDragging) return;
+      dragState.isDragging = false;
+      clearPreview();
+    });
+
+    function tryPlaceAtPixel(pixelIndex) {
+      const errorEl = document.getElementById("error");
+      errorEl.textContent = "";
+
+      const result = computePlacement(pixelIndex);
+      if (!result.ok) {
+        if (result.message) errorEl.textContent = result.message;
+        return;
+      }
+
+      const { prefix, pixelsNeeded, label, start, end } = result;
 
       // allocate
       const id = state.nextId++;
@@ -399,7 +546,9 @@
 
       colorGrid();
       renderAllocTable();
+      renderPalette();
     }
+
 
     function colorGrid() {
       const grid = document.getElementById("grid");
@@ -440,7 +589,8 @@
       });
     }
 
-    function renderAllocTable() {
+    
+function renderAllocTable() {
       const tbody = document.getElementById("allocTable");
       tbody.innerHTML = "";
       if (!state.base) return;
@@ -452,17 +602,46 @@
           el.textContent = text;
           return el;
         }
+
         const cidrStr = `${intToIp(a.networkInt)}/${a.prefix}`;
         const usable = usableHostsFromPrefix(a.prefix);
+
         tr.appendChild(td(a.label));
         tr.appendChild(td(cidrStr));
         tr.appendChild(td(a.pixelsNeeded));
         tr.appendChild(td(usable));
         tr.appendChild(td(intToIp(a.networkInt)));
         tr.appendChild(td(intToIp(a.broadcastInt)));
+
+        const removeTd = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.className = "remove";
+        btn.textContent = "Remove";
+        btn.addEventListener("click", () => removeAllocation(a.id));
+        removeTd.appendChild(btn);
+        tr.appendChild(removeTd);
+
         tbody.appendChild(tr);
       });
     }
+
+    function removeAllocation(id) {
+      const errorEl = document.getElementById("error");
+      errorEl.textContent = "";
+      const idx = state.allocations.findIndex(a => a.id === id);
+      if (idx === -1) return;
+
+      // clear pixels owned by this allocation
+      for (let i = 0; i < state.totalPixels; i++) {
+        if (state.usedByPixel[i] === id) state.usedByPixel[i] = null;
+      }
+      state.allocations.splice(idx, 1);
+
+      colorGrid();
+      renderAllocTable();
+      renderPalette();
+    }
+
 
     // ---------- Base setup ----------
     function applyBase() {
