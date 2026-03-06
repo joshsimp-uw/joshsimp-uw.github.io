@@ -145,6 +145,8 @@
     moveHandler: null,
     upHandler: null,
     cancelHandler: null,
+    sortKey: 'startCell',
+    sortDir: 'asc',
   };
 
   function choosePixelPrefix(totalBits, basePrefix){
@@ -177,6 +179,27 @@
   function clearPreviewClasses(){
     const grid = document.getElementById('grid');
     [...grid.children].forEach(cell => cell.classList.remove('previewOk', 'previewBad'));
+  }
+  function clearPlacementHints(){
+    const grid = document.getElementById('grid');
+    [...grid.children].forEach(cell => cell.classList.remove('validRange','validStart'));
+  }
+  function clearCellMarks(cell){
+    cell.classList.remove('occupied','startMark','endMark');
+    cell.querySelectorAll('.mark').forEach(mark => mark.remove());
+  }
+  function applyPlacementHints(){
+    clearPlacementHints();
+    if(!state.cidr) return;
+    const prefix = state.dragging?.prefix ?? state.selectedPrefix;
+    if(prefix === null) return;
+    const grid = document.getElementById('grid');
+    const cellCount = blockCellCount(state.pixelPrefix, prefix);
+    for(let start = 0; start < state.totalCells; start += cellCount){
+      if(!canPlace(start, cellCount)) continue;
+      for(let i=0;i<cellCount;i++) grid.children[start + i]?.classList.add('validRange');
+      grid.children[start]?.classList.add('validStart');
+    }
   }
   function applyPreview(startCell, cellCount, ok){
     clearPreviewClasses();
@@ -217,14 +240,13 @@
 
   function renderGrid(){
     const grid = document.getElementById('grid');
+    clearPlacementHints();
     for(let i=0;i<state.totalCells;i++){
       const cell = grid.children[i];
       if(!cell) continue;
-      cell.style.background = 'rgba(255,255,255,.02)';
-      cell.classList.remove('occupied','startMark','endMark');
+      cell.style.background = '';
       cell.title = '';
-      const mark = cell.querySelector('.mark');
-      if(mark) mark.style.background = 'transparent';
+      clearCellMarks(cell);
     }
     for(const a of state.allocations){
       for(let i=0;i<a.cellCount;i++){
@@ -236,11 +258,29 @@
       }
       const startCell = grid.children[a.startCell];
       const endCell = grid.children[a.startCell + a.cellCount - 1];
-      startCell?.classList.add('startMark');
-      endCell?.classList.add('endMark');
-      startCell?.querySelector('.mark')?.style.setProperty('background', 'var(--ok)');
-      endCell?.querySelector('.mark')?.style.setProperty('background', 'var(--danger)');
+
+      if(startCell){
+        startCell.classList.add('startMark');
+        const startDot = document.createElement('div');
+        startDot.className = 'mark';
+        startDot.style.background = 'var(--ok)';
+        startDot.style.position = 'absolute';
+        startDot.style.top = '6px';
+        startDot.style.left = '6px';
+        startCell.appendChild(startDot);
+      }
+      if(endCell){
+        endCell.classList.add('endMark');
+        const endDot = document.createElement('div');
+        endDot.className = 'mark';
+        endDot.style.background = 'var(--danger)';
+        endDot.style.position = 'absolute';
+        endDot.style.right = '6px';
+        endDot.style.bottom = '6px';
+        endCell.appendChild(endDot);
+      }
     }
+    applyPlacementHints();
   }
 
   function renderPalette(){
@@ -265,7 +305,8 @@
         if(btn.classList.contains('disabled')) return;
         state.selectedPrefix = p;
         renderPalette();
-        setStatus(`Selected /${p}. Tap or drag onto the grid.`, 'ok');
+        renderGrid();
+        setStatus(`Selected /${p}. Highlighted cells show every valid aligned placement.`, 'ok');
       });
       btn.addEventListener('pointerdown', (ev) => {
         if(btn.classList.contains('disabled')) return;
@@ -276,10 +317,56 @@
     }
   }
 
+  function sortAllocations(items){
+    const arr = [...items];
+    const key = state.sortKey;
+    const dir = state.sortDir === 'desc' ? -1 : 1;
+    arr.sort((a,b) => {
+      let av, bv;
+      switch(key){
+        case 'label': av = a.label; bv = b.label; break;
+        case 'cidr': av = a.cidr; bv = b.cidr; break;
+        case 'cellCount': av = a.cellCount; bv = b.cellCount; break;
+        case 'addresses': av = pow2(state.cidr.totalBits - a.prefix); bv = pow2(state.cidr.totalBits - b.prefix); break;
+        case 'usable':
+          if(state.cidr.version === 6){
+            av = pow2(state.cidr.totalBits - a.prefix);
+            bv = pow2(state.cidr.totalBits - b.prefix);
+          } else {
+            const ah = state.cidr.totalBits - a.prefix;
+            const bh = state.cidr.totalBits - b.prefix;
+            av = a.prefix === 32 ? 1n : a.prefix === 31 ? 2n : pow2(ah) - 2n;
+            bv = b.prefix === 32 ? 1n : b.prefix === 31 ? 2n : pow2(bh) - 2n;
+          }
+          break;
+        case 'firstStr': av = a.first; bv = b.first; break;
+        case 'lastStr': av = a.last; bv = b.last; break;
+        default: av = a.startCell; bv = b.startCell;
+      }
+      if(typeof av === 'string' && typeof bv === 'string'){
+        return av.localeCompare(bv, undefined, {numeric:true, sensitivity:'base'}) * dir;
+      }
+      if(av < bv) return -1 * dir;
+      if(av > bv) return 1 * dir;
+      return (a.startCell - b.startCell) * dir;
+    });
+    return arr;
+  }
+
+  function updateSortHeaders(){
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.classList.remove('sortedAsc','sortedDesc');
+      if(th.dataset.sort === state.sortKey){
+        th.classList.add(state.sortDir === 'desc' ? 'sortedDesc' : 'sortedAsc');
+      }
+    });
+  }
+
   function renderTable(){
     const body = document.getElementById('allocBody');
     body.innerHTML = '';
-    for(const a of state.allocations){
+    const sorted = sortAllocations(state.allocations);
+    for(const a of sorted){
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${a.label}</td>
@@ -293,6 +380,7 @@
       tr.querySelector('.smallBtn').addEventListener('click', () => removeAllocation(a.id));
       body.appendChild(tr);
     }
+    updateSortHeaders();
   }
 
   function addAllocation(prefix, dropCellIndex){
@@ -314,6 +402,8 @@
       startCell: start,
       cellCount,
       cidr: `${fmtIP(state.cidr.version, net)}/${prefix}`,
+      first: net,
+      last,
       firstStr: fmtIP(state.cidr.version, net),
       lastStr: fmtIP(state.cidr.version, last),
       color: colorForId(id),
@@ -377,12 +467,14 @@
     }
     state.preview = null;
     clearPreviewClasses();
+    renderGrid();
   }
 
   function startDrag(ev, prefix, cellCount){
     state.selectedPrefix = prefix;
-    renderPalette();
     state.dragging = { prefix, cellCount, pointerId: ev.pointerId };
+    renderPalette();
+    renderGrid();
     state.moveHandler = (moveEv) => updatePreviewAtPoint(moveEv.clientX, moveEv.clientY);
     state.upHandler = (upEv) => stopDrag(true, upEv.clientX, upEv.clientY);
     state.cancelHandler = () => stopDrag(false, 0, 0);
@@ -390,7 +482,7 @@
     document.addEventListener('pointerup', state.upHandler, { passive: true, once: true });
     document.addEventListener('pointercancel', state.cancelHandler, { passive: true, once: true });
     updatePreviewAtPoint(ev.clientX, ev.clientY);
-    setStatus(`Dragging /${prefix}. Release over the grid to place it.`, 'ok');
+    setStatus(`Dragging /${prefix}. Highlighted zones show valid aligned placements.`, 'ok');
   }
 
   function applyBase(){
@@ -433,6 +525,14 @@
     document.getElementById('applyBtn').addEventListener('click', applyBase);
     document.getElementById('clearBtn').addEventListener('click', clearAllocations);
     document.getElementById('cidr').addEventListener('keydown', (ev) => { if(ev.key === 'Enter') applyBase(); });
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if(state.sortKey === key) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        else { state.sortKey = key; state.sortDir = 'asc'; }
+        renderTable();
+      });
+    });
     window.addEventListener('resize', fitGridToViewport, { passive: true });
     fitGridToViewport();
     applyBase();
