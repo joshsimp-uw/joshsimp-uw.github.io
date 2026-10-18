@@ -36,3 +36,5 @@ Every project needs this section; the build fails without it.
 ```
 
 Static demos (plain HTML/CSS/JS) go in `public/demos/<slug>/`.
+
+

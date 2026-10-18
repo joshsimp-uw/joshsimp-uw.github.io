@@ -3,7 +3,7 @@ title: Networking Tetris
 summary: Interactive VLSM subnetting visualizer built on the 4B (Block Boundary) method.
 tags: [networking, subnetting, javascript]
 repo: https://github.com/joshsimp-uw/NetworkTetris
-demo: /demos/network-tetris/
+demo: /network-tetris.html
 featured: true
 ---
 
