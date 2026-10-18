@@ -181,13 +181,19 @@ main {
 
 /* Footer mirrors the header: Husky Purple band, gold rule on the inner edge */
 .site-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
   background: var(--header-bg);
   border-top: 4px solid var(--header-rule);
   color: var(--header-text);
   font-size: 0.9rem;
+}
+
+/* Pin only where the footer fits on one line; on phones it would eat the screen */
+@media (min-width: 900px) {
+  .site-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
 }
 
 .site-footer a {
