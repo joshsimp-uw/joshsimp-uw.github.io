@@ -175,6 +175,12 @@ main {
   font-size: 0.9rem;
 }
 
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
 .tag {
   display: inline-block;
   padding: 2px 10px;
