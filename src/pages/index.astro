@@ -23,6 +23,29 @@ const projects = await getProjects();
     </p>
   </section>
 
+  <section class="on-site" aria-labelledby="site-heading">
+    <h2 id="site-heading">On this site</h2>
+    <p class="section-intro">
+      Every project here comes with a write-up and a reflection on what I learned building it, because the lessons
+      matter as much as the code.
+    </p>
+    <ul class="project-list">
+      {
+        projects.map((project) => {
+          const course = courseLabel(project);
+          return (
+            <li>
+              <a href={`/projects/${project.id}/`}>{project.data.title}</a>
+              {course && <span class="meta"> · {course}</span>}
+              <p>{project.data.summary}</p>
+            </li>
+          );
+        })
+      }
+    </ul>
+    <p><a class="more" href="/projects/">Browse all projects →</a></p>
+  </section>
+
   <div class="columns">
     <section aria-labelledby="degrees-heading">
       <h2 id="degrees-heading">Degrees</h2>
@@ -58,29 +81,6 @@ const projects = await getProjects();
       </ul>
     </section>
   </div>
-
-  <section class="on-site" aria-labelledby="site-heading">
-    <h2 id="site-heading">On this site</h2>
-    <p class="section-intro">
-      Every project here comes with a write-up and a reflection on what I learned building it, because the lessons
-      matter as much as the code.
-    </p>
-    <ul class="project-list">
-      {
-        projects.map((project) => {
-          const course = courseLabel(project);
-          return (
-            <li>
-              <a href={`/projects/${project.id}/`}>{project.data.title}</a>
-              {course && <span class="meta"> · {course}</span>}
-              <p>{project.data.summary}</p>
-            </li>
-          );
-        })
-      }
-    </ul>
-    <p><a class="more" href="/projects/">Browse all projects →</a></p>
-  </section>
 </Base>
 
 <style>
@@ -138,7 +138,9 @@ const projects = await getProjects();
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 32px 56px;
-    margin-bottom: 48px;
+    margin-top: 48px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
   }
 
   h2 {
@@ -210,8 +212,6 @@ const projects = await getProjects();
 
   .on-site {
     max-width: 720px;
-    padding-top: 40px;
-    border-top: 1px solid var(--border);
   }
 
   .section-intro {
