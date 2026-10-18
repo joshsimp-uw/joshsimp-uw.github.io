@@ -169,10 +169,24 @@ main {
   padding-block: 40px 64px;
 }
 
+/* Footer mirrors the header: Husky Purple band, gold rule on the inner edge */
 .site-footer {
-  border-top: 1px solid var(--border);
-  color: var(--muted);
+  background: var(--header-bg);
+  border-top: 4px solid var(--header-rule);
+  color: var(--header-text);
   font-size: 0.9rem;
+}
+
+.site-footer a {
+  color: var(--header-muted);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--header-text);
+  text-decoration: underline;
+  text-decoration-color: var(--header-rule);
+  text-underline-offset: 4px;
 }
 
 .footer-links {
