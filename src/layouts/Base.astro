@@ -6,9 +6,11 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'School projects by Joshua Simpson, University of Washington Tacoma.' } =
+import { EMAIL } from '../data/profile';
+
+const { title, description = 'Coursework and projects by Josh Simpson, University of Washington Tacoma.' } =
   Astro.props;
-const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title} | Joshua Simpson`;
+const pageTitle = `${title} | Josh Simpson`;
 ---
 
 <!doctype html>
@@ -26,19 +28,25 @@ const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title}
       href="https://fonts.googleapis.com/css2?family=Encode+Sans:wght@600;700&family=Open+Sans:wght@400;600&display=swap"
     />
     <title>{pageTitle}</title>
-    <!-- Apply the saved theme before first paint so there is no flash; light is the default -->
+    <!--
+      Resolve the theme before first paint so there is no flash:
+      1. the visitor's saved choice (theme cookie), 2. their system preference, 3. light.
+    -->
     <script is:inline>
-      try {
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
-      } catch {}
+      (function () {
+        var saved = document.cookie.match(/(?:^|; )theme=(light|dark)/);
+        var system = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = saved ? saved[1] : system;
+      })();
     </script>
   </head>
   <body>
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href="/">Joshua Simpson</a>
+        <a class="brand" href="/">Josh Simpson</a>
         <nav class="site-nav" aria-label="Main">
-          <a href="/">Projects</a>
+          <a href="/">Home</a>
+          <a href="/projects/">Projects</a>
           <a href="https://github.com/joshsimp-uw">GitHub</a>
           <a href="https://joshsimpson.dev">Portfolio</a>
           <a href="https://joshsimpson.info">About</a>
@@ -59,7 +67,10 @@ const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title}
     </main>
     <footer class="site-footer">
       <div class="wrap">
-        <span>Joshua Simpson · University of Washington Tacoma</span>
+        <span>
+          Josh Simpson · University of Washington Tacoma ·
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+        </span>
         <span class="footer-links">
           <a href="https://joshsimpson.info">joshsimpson.info</a>
           <a href="https://joshsimpson.dev">joshsimpson.dev</a>
@@ -75,12 +86,19 @@ const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title}
         toggle?.setAttribute('aria-label', `Switch to ${next} mode`);
       }
 
+      const hasSavedTheme = () => /(?:^|; )theme=(light|dark)/.test(document.cookie);
+
       toggle?.addEventListener('click', () => {
         const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
         root.dataset.theme = theme;
-        try {
-          localStorage.setItem('theme', theme);
-        } catch {}
+        document.cookie = `theme=${theme}; Max-Age=31536000; Path=/; SameSite=Lax; Secure`;
+        syncLabel();
+      });
+
+      // Until the visitor picks a theme, follow live changes to the system preference
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+        if (hasSavedTheme()) return;
+        root.dataset.theme = event.matches ? 'dark' : 'light';
         syncLabel();
       });
 

@@ -1,0 +1,124 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getProjects, courseLabel } from '../../lib/projects';
+
+const projects = await getProjects();
+---
+
+<Base title="Projects">
+  <section class="intro">
+    <h1>Projects</h1>
+    <p>
+      Coursework and side projects from my studies at the University of Washington Tacoma. Each one includes a write-up
+      of what I learned building it.
+    </p>
+  </section>
+
+  <ul class="grid">
+    {
+      projects.map((project) => {
+        const course = courseLabel(project);
+        return (
+          <li class="card">
+            <a class="card-link" href={`/projects/${project.id}/`}>
+              <h2>{project.data.title}</h2>
+            </a>
+            {course && <p class="meta">{course}</p>}
+            <p class="summary">{project.data.summary}</p>
+            <div class="tags">
+              {project.data.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+            {project.data.demo && <span class="badge">Live demo</span>}
+          </li>
+        );
+      })
+    }
+  </ul>
+</Base>
+
+<style>
+  .intro {
+    max-width: 640px;
+    margin-bottom: 32px;
+  }
+
+  .intro h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+  }
+
+  .intro p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    border-color: var(--accent);
+  }
+
+  .card h2 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+
+  /* Stretch the title link over the whole card */
+  .card-link {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .card .meta,
+  .summary {
+    margin: 0;
+  }
+
+  .summary {
+    flex: 1;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+</style>
