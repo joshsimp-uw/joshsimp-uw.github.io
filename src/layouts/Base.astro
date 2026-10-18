@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'School projects by Joshua Simpson, University of Washington Tacoma.' } =
+  Astro.props;
+const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title} | Joshua Simpson`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">Joshua Simpson</a>
+        <nav class="site-nav" aria-label="Main">
+          <a href="/">Projects</a>
+          <a href="https://github.com/joshsimp-uw">GitHub</a>
+          <a href="https://joshsimpson.dev">Portfolio</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>Joshua Simpson · University of Washington Tacoma</span>
+        <a href="https://joshsimpson.dev">joshsimpson.dev</a>
+      </div>
+    </footer>
+  </body>
+</html>
