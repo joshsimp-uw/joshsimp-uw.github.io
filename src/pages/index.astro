@@ -1,0 +1,244 @@
+---
+import Base from '../layouts/Base.astro';
+import { getProjects, courseLabel } from '../lib/projects';
+import { EMAIL, degrees, certifications } from '../data/profile';
+
+const projects = await getProjects();
+---
+
+<Base title="Educational Repertoire">
+  <section class="hero">
+    <p class="eyebrow">University of Washington Tacoma</p>
+    <h1>Josh Simpson</h1>
+    <p class="subtitle">Educational Repertoire</p>
+    <p class="intro">
+      I spent more than twenty years fixing and building systems before I went back to school, and I learned pretty
+      quickly that the best way for me to understand something is to build it. This site is where I keep that work.
+      Every project here started as a class assignment or a question I couldn't let go of, and each one includes what I
+      learned along the way, including the parts that didn't go as planned. I believe learning is meant to be shared,
+      so if something here helps you understand a concept a little faster, it's doing exactly what I hoped it would.
+    </p>
+    <p class="contact">
+      <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+    </p>
+  </section>
+
+  <section class="on-site" aria-labelledby="site-heading">
+    <h2 id="site-heading">On this site</h2>
+    <p class="section-intro">
+      Every project here comes with a write-up and a reflection on what I learned building it, because the lessons
+      matter as much as the code.
+    </p>
+    <ul class="project-list">
+      {
+        projects.map((project) => {
+          const course = courseLabel(project);
+          return (
+            <li>
+              <a href={`/projects/${project.id}/`}>{project.data.title}</a>
+              {course && <span class="meta"> · {course}</span>}
+              <p>{project.data.summary}</p>
+            </li>
+          );
+        })
+      }
+    </ul>
+    <p><a class="more" href="/projects/">Browse all projects →</a></p>
+  </section>
+
+  <div class="columns">
+    <section aria-labelledby="degrees-heading">
+      <h2 id="degrees-heading">Degrees</h2>
+      <ul class="timeline">
+        {
+          degrees.map((degree) => (
+            <li class:list={{ current: degree.inProgress }}>
+              <span class="year">{degree.inProgress ? `Expected ${degree.year}` : degree.year}</span>
+              <span class="item-title">{degree.title}</span>
+              <span class="item-sub">
+                {degree.school}
+                {degree.honors && <> · {degree.honors}</>}
+                {degree.inProgress && <span class="status">In progress</span>}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="certs-heading">
+      <h2 id="certs-heading">Certifications</h2>
+      <ul class="timeline">
+        {
+          certifications.map((cert) => (
+            <li>
+              <span class="year">{cert.year}</span>
+              <span class="item-title">{cert.title}</span>
+              <span class="item-sub">{cert.issuer}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .hero {
+    max-width: 680px;
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+  }
+
+  .subtitle {
+    margin: 4px 0 24px;
+    font-family: var(--font-heading);
+    font-size: clamp(1.15rem, 3vw, 1.4rem);
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  /* Short Husky Gold rule under the subtitle */
+  .subtitle::after {
+    content: '';
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin-top: 16px;
+    border-radius: 2px;
+    background: var(--husky-gold);
+  }
+
+  .intro {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+  }
+
+  .contact {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 32px 56px;
+    margin-top: 48px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 1.4rem;
+  }
+
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .timeline li {
+    display: grid;
+    gap: 2px;
+    padding: 0 0 20px 20px;
+    border-left: 3px solid var(--border);
+    position: relative;
+  }
+
+  .timeline li:last-child {
+    padding-bottom: 0;
+  }
+
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 4px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 3px solid var(--accent);
+  }
+
+  .timeline li.current::before {
+    background: var(--husky-gold);
+    border-color: var(--husky-gold);
+  }
+
+  .year {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .item-title {
+    font-weight: 600;
+  }
+
+  .item-sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .status {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .on-site {
+    max-width: 720px;
+  }
+
+  .section-intro {
+    margin: 0 0 20px;
+    color: var(--muted);
+  }
+
+  .project-list {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+
+  .project-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .project-list a {
+    font-weight: 600;
+  }
+
+  .project-list p {
+    margin: 2px 0 0;
+  }
+
+  .more {
+    font-weight: 600;
+  }
+</style>

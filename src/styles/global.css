@@ -1,0 +1,243 @@
+/* UW Husky brand palette */
+:root {
+  --husky-purple: #32006e;
+  --spirit-purple: #4b2e83;
+  --husky-gold: #b7a57a;
+  --husky-gold-web: #e8e3d3;
+  --heritage-gold: #85754d;
+  --spirit-gold: #ffc700;
+  --accent-lavender: #c5b4e3;
+
+  --radius: 10px;
+  --max: 1080px;
+  --font-heading: 'Encode Sans', system-ui, sans-serif;
+  --font-body: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Light is the default theme */
+:root,
+:root[data-theme='light'] {
+  --bg: #f6f5f8;
+  --surface: #ffffff;
+  --text: #1d1b22;
+  --muted: #5c5866;
+  --border: #e3e0e9;
+  --accent: var(--spirit-purple);
+  --accent-strong: var(--husky-purple);
+  --on-accent: #ffffff;
+  --button-bg: var(--husky-purple);
+  --tag-bg: #ede8f6;
+  --tag-text: var(--spirit-purple);
+  --header-bg: var(--husky-purple);
+  --header-text: #ffffff;
+  --header-muted: var(--husky-gold-web);
+  --header-rule: var(--husky-gold);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #120a1e;
+  --surface: #1c1229;
+  --text: #f1eef6;
+  --muted: #b3abc2;
+  --border: #33264a;
+  --accent: var(--accent-lavender);
+  --accent-strong: var(--accent-lavender);
+  --on-accent: #1c1229;
+  --button-bg: var(--husky-gold);
+  --tag-bg: #2c1e45;
+  --tag-text: var(--accent-lavender);
+  --header-bg: var(--husky-purple);
+  --header-text: #ffffff;
+  --header-muted: var(--husky-gold-web);
+  --header-rule: var(--husky-gold);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Column layout so main grows and the footer sits at the bottom of short pages */
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body > main {
+  flex: 1;
+  width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  line-height: 1.2;
+  color: var(--accent-strong);
+}
+
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--spirit-gold);
+  outline-offset: 2px;
+}
+
+.wrap {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.site-header {
+  background: var(--header-bg);
+  border-bottom: 4px solid var(--header-rule);
+}
+
+.site-header .wrap,
+.site-footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 16px;
+}
+
+.brand {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--header-text);
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.site-nav a {
+  color: var(--header-muted);
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  color: var(--header-text);
+  text-decoration: underline;
+  text-decoration-color: var(--header-rule);
+  text-underline-offset: 4px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--header-text);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--header-rule);
+}
+
+/* Show the icon for the theme you would switch to */
+.theme-toggle .icon-sun,
+:root[data-theme='dark'] .theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme='dark'] .theme-toggle .icon-sun {
+  display: block;
+}
+
+main {
+  padding-block: 40px 64px;
+}
+
+/* Footer mirrors the header: Husky Purple band, gold rule on the inner edge */
+.site-footer {
+  background: var(--header-bg);
+  border-top: 4px solid var(--header-rule);
+  color: var(--header-text);
+  font-size: 0.9rem;
+}
+
+/* Pin only where the footer fits on one line; on phones it would eat the screen */
+@media (min-width: 900px) {
+  .site-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+}
+
+.site-footer a {
+  color: var(--header-muted);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--header-text);
+  text-decoration: underline;
+  text-decoration-color: var(--header-rule);
+  text-underline-offset: 4px;
+}
+
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 4px;
+}
+
+.footer-meta > * + *::before {
+  content: '·';
+  display: inline-block;
+  margin: 0 12px;
+  color: var(--header-text);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  font-size: 0.8rem;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}

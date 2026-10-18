@@ -1,0 +1,108 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { getProjects, courseLabel, type Project } from '../../lib/projects';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+}
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const { title, summary, term, tags, repo, demo, status } = project.data;
+const course = courseLabel(project);
+const meta = [course, term, status !== 'complete' ? status : undefined].filter(Boolean).join(' · ');
+---
+
+<Base title={title} description={summary}>
+  <article>
+    <a class="back" href="/projects/">← All projects</a>
+    <h1>{title}</h1>
+    {meta && <p class="meta">{meta}</p>}
+    <p class="lede">{summary}</p>
+
+    <div class="actions">
+      {demo && <a class="button primary" href={demo}>Open live demo</a>}
+      {repo && <a class="button" href={repo}>View source</a>}
+    </div>
+
+    <div class="tags">
+      {tags.map((tag) => <span class="tag">{tag}</span>)}
+    </div>
+
+    <div class="body">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  article {
+    max-width: 720px;
+  }
+
+  .back {
+    display: inline-block;
+    margin-bottom: 24px;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+  }
+
+  .meta {
+    margin: 0 0 16px;
+  }
+
+  .lede {
+    font-size: 1.15rem;
+    margin: 0 0 20px;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .button {
+    padding: 8px 16px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .button.primary {
+    background: var(--button-bg);
+    border-color: var(--button-bg);
+    color: var(--on-accent);
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+
+  .body :global(h2) {
+    margin-top: 2em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border);
+    font-size: 1.3rem;
+  }
+</style>
