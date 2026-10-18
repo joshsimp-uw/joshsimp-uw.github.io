@@ -34,13 +34,13 @@ export const degrees: Degree[] = [
     title: 'AAS-T in Information Technology: Security',
     school: 'Olympic College',
     year: 2023,
-    honors: "Dean's List",
+    honors: "Deans' Scholar",
   },
   {
     title: 'AAS-T in Information Technology: Networking',
     school: 'Olympic College',
     year: 2022,
-    honors: "Dean's List",
+    honors: "Deans' Scholar",
   },
 ];
 
