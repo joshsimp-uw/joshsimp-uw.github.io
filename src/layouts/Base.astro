@@ -12,14 +12,26 @@ const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title}
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Encode+Sans:wght@600;700&family=Open+Sans:wght@400;600&display=swap"
+    />
     <title>{pageTitle}</title>
+    <!-- Apply the saved theme before first paint so there is no flash; light is the default -->
+    <script is:inline>
+      try {
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch {}
+    </script>
   </head>
   <body>
     <header class="site-header">
@@ -29,6 +41,15 @@ const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title}
           <a href="/">Projects</a>
           <a href="https://github.com/joshsimp-uw">GitHub</a>
           <a href="https://joshsimpson.dev">Portfolio</a>
+          <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+            <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+            </svg>
+          </button>
         </nav>
       </div>
     </header>
@@ -41,5 +62,25 @@ const pageTitle = title === 'Projects' ? 'Joshua Simpson | Projects' : `${title}
         <a href="https://joshsimpson.dev">joshsimpson.dev</a>
       </div>
     </footer>
+    <script>
+      const root = document.documentElement;
+      const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+
+      function syncLabel() {
+        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        toggle?.setAttribute('aria-label', `Switch to ${next} mode`);
+      }
+
+      toggle?.addEventListener('click', () => {
+        const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        root.dataset.theme = theme;
+        try {
+          localStorage.setItem('theme', theme);
+        } catch {}
+        syncLabel();
+      });
+
+      syncLabel();
+    </script>
   </body>
 </html>
