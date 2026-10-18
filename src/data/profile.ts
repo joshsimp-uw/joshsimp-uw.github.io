@@ -47,5 +47,6 @@ export const certifications: Certification[] = [
   { title: 'Security+', issuer: 'CompTIA', year: '2022' },
   { title: 'Network+', issuer: 'CompTIA', year: '2022' },
   { title: 'A+', issuer: 'CompTIA', year: '2022' },
+  { title: 'CHFI: Computer Hacking Forensic Investigator', issuer: 'EC-Council', year: '2022' },
   { title: 'MCSE: Windows NT 4.0', issuer: 'Microsoft', year: '2000–2001' },
 ];
